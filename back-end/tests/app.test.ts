@@ -65,6 +65,33 @@ describe("recommendations get tests", () => {
   });
 });
 
+describe("recommendations get by id tests", () => {
+  it("for get recommendations by id, return status code 200", async () => {
+    const data = await recommendationFactory.createRecommendation();
+
+    const response = await supertest(app).get(`/recommendations/${data.id}`);
+    expect(response.statusCode).toBe(200);
+  });
+});
+
+// describe("random recommendations get tests", () => {
+//   it("for get random recommendations, return status code 200", async () => {
+//     const data = await recommendationFactory.createRecommendation();
+
+//     const response = await supertest(app).get(`/recommendations/random`);
+//     expect(response.statusCode).toBe(200);
+//   });
+// });
+
+// describe("recommendations get by amount score tests", () => {
+//   it("for get recommendations by amount score, return status code 200", async () => {
+//     const data = await recommendationFactory.createRecommendation();
+
+//     const response = await supertest(app).get(`/recommendations/top/${data.score}`);
+//     expect(response.statusCode).toBe(200);
+//   });
+// });
+
 afterAll(async () => {
   await prisma.$disconnect();
 });
