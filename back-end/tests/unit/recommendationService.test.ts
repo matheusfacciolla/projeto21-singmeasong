@@ -6,14 +6,12 @@ import { recommendationRepository } from "../../src/repositories/recommendationR
 import { CreateRecommendationData } from "../../src/services/recommendationsService.js";
 import { Recommendation } from "@prisma/client";
 
-import { notFoundError } from "../../src/utils/errorUtils.js";
-
-jest.mock("../../src/repositories/recommendationRepository.js");
+jest.mock("../../src/repositories/recommendationRepository");
 
 describe("insert recommendation test suite", () => {
   it("should create a recommendation", async () => {
     const recommendation: CreateRecommendationData = {
-      name: "Fulano",
+      name: "Music1",
       youtubeLink: "https://www.youtube.com/watch?v=bd5DCefoRbY",
     };
 
@@ -30,7 +28,7 @@ describe("insert recommendation test suite", () => {
 
   it("should not create duplicated recommendations", async () => {
     const recommendation: CreateRecommendationData = {
-      name: "Fulano",
+      name: "Music1",
       youtubeLink: "https://www.youtube.com/watch?v=bd5DCefoRbY",
     };
 
@@ -55,7 +53,7 @@ describe("upvote test suite", () => {
   it("should upvote recommendation", async () => {
     const recommendation: Recommendation = {
       id: 1,
-      name: "Fulano",
+      name: "Music1",
       youtubeLink: "https://www.youtube.com/watch?v=bd5DCefoRbY",
       score: 3,
     };
@@ -82,7 +80,10 @@ describe("upvote test suite", () => {
         return null;
       });
 
-    expect(recommendationService.upvote(0)).rejects.toEqual(notFoundError());
+    expect(recommendationService.upvote(0)).rejects.toEqual({
+      type: "not_found",
+      message: "",
+    });
   });
 });
 
@@ -90,7 +91,7 @@ describe("downvote test suite", () => {
   it("should downvote recommendation and delete recommendation if score is less than -5", async () => {
     const recommendation: Recommendation = {
       id: 1,
-      name: "Fulano",
+      name: "Music1",
       youtubeLink: "https://www.youtube.com/watch?v=bd5DCefoRbY",
       score: -5,
     };
@@ -121,7 +122,10 @@ describe("downvote test suite", () => {
         return null;
       });
 
-    expect(recommendationService.upvote(100)).rejects.toEqual(notFoundError());
+    expect(recommendationService.upvote(100)).rejects.toEqual({
+      type: "not_found",
+      message: "",
+    });
   });
 });
 
@@ -135,17 +139,17 @@ describe("get recommendations test suite", () => {
     expect(recommendationRepository.findAll).toBeCalled();
   });
 
-  it("should get recommendation by id", async () => {
+  it("should get recommendation by amount", async () => {
     const recommendations = [
       {
         id: 1,
-        name: "Fulano",
+        name: "Music1",
         youtubeLink: "https://www.youtube.com/watch?v=bd5DCefoRbY",
         score: 20,
       },
       {
         id: 2,
-        name: "Ciclano",
+        name: "Music2",
         youtubeLink: "https://www.youtube.com/watch?v=JVSJ_mGWIDc",
         score: 10,
       },
@@ -159,5 +163,90 @@ describe("get recommendations test suite", () => {
 
     await recommendationService.getTop(2);
     expect(recommendationRepository.getAmountByScore).toBeCalled();
+  });
+
+  it("get random recommendation, 70% of the time should return one recommendation with score above 10", async () => {
+    const recommendations = [
+      {
+        id: 1,
+        name: "Music1",
+        youtubeLink: "https://www.youtube.com/watch?v=bd5DCefoRbY",
+        score: 11,
+      },
+      {
+        id: 2,
+        name: "Music2",
+        youtubeLink: "https://www.youtube.com/watch?v=JVSJ_mGWIDc",
+        score: 9,
+      },
+    ];
+
+    jest.spyOn(Math, "random").mockReturnValueOnce(0.5);
+    jest
+      .spyOn(recommendationRepository, "findAll")
+      .mockResolvedValueOnce([recommendations[0]]);
+
+    const result = await recommendationService.getRandom();
+    expect(result.score).toEqual(recommendations[0].score);
+  });
+
+  it("get random recommendation, 100% of the time should return any recommendation if only have score above or below 10", async () => {
+    const recommendations = [
+      {
+        id: 1,
+        name: "Music1",
+        youtubeLink: "https://www.youtube.com/watch?v=bd5DCefoRbY",
+        score: 11,
+      },
+      {
+        id: 2,
+        name: "Music2",
+        youtubeLink: "https://www.youtube.com/watch?v=JVSJ_mGWIDc",
+        score: 12,
+      },
+    ];
+
+    jest.spyOn(Math, "random").mockReturnValueOnce(0.7);
+    jest
+      .spyOn(recommendationRepository, "findAll")
+      .mockResolvedValueOnce(recommendations);
+
+    const result = await recommendationService.getRandom();
+    expect(result).not.toBeNull();
+  });
+
+  it("get random recommendation, 30% of the time should return one recommendation with score between -5 and 10", async () => {
+    const recommendations = [
+      {
+        id: 1,
+        name: "Music1",
+        youtubeLink: "https://www.youtube.com/watch?v=bd5DCefoRbY",
+        score: 3,
+      },
+      {
+        id: 2,
+        name: "Music2",
+        youtubeLink: "https://www.youtube.com/watch?v=JVSJ_mGWIDc",
+        score: -3,
+      },
+    ];
+
+    jest.spyOn(Math, "random").mockReturnValueOnce(0.7);
+    jest
+      .spyOn(recommendationRepository, "findAll")
+      .mockResolvedValueOnce([recommendations[0]]);
+
+    const result = await recommendationService.getRandom();
+    expect(result.score).toEqual(recommendations[0].score);
+  });
+
+  it("if don't have recommendations registered, should fail to get", async () => {
+    jest.spyOn(Math, "random").mockReturnValueOnce(0.5);
+    jest.spyOn(recommendationRepository, "findAll").mockResolvedValue([]);
+
+    return expect(recommendationService.getRandom()).rejects.toEqual({
+      type: "not_found",
+      message: "",
+    });
   });
 });
