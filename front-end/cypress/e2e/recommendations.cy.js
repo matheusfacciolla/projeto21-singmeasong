@@ -1,42 +1,32 @@
 /// <reference types="cypress" />
 
-const URL = "http://localhost:3000/";
+import { faker } from "@faker-js/faker";
+
+const URL = "http://localhost:3000";
 
 beforeEach(() => {
     cy.resetAll();
 });
 
+const recommendation = {
+    name: faker.music.songName(),
+    youtubeLink: "https://www.youtube.com/watch?v=awbw9H0Xx20"
+}
+
 describe("create recommendations", () => {
     it("should create a recommendation successfully", () => {
-        const recommendation = {
-            name: "Music",
-            youtubeLink: "https://www.youtube.com/watch?v=awbw9H0Xx20"
-        }
-
         cy.createRecommendation(recommendation);
-
         cy.contains(`${recommendation.name}`).should("exist");
     });
 
     it("shouldn't create a recommendation successfully", () => {
-        const recommendation = {
-            name: "WrongName",
-            youtubeLink: "WrongLink"
-        }
-
         cy.createRecommendation(recommendation);
-
         cy.contains(`${recommendation.name}`).should("not.exist");
     });
 });
 
 describe("vote", () => {
     it("should upvote successfully and increase 1", () => {
-        const recommendation = {
-            name: "Music",
-            youtubeLink: "https://www.youtube.com/watch?v=awbw9H0Xx20"
-        }
-
         cy.createRecommendation(recommendation);
 
         cy.visit(URL)
@@ -46,11 +36,6 @@ describe("vote", () => {
     });
 
     it("should downvote successfully and decrease 1", () => {
-        const recommendation = {
-            name: "Music",
-            youtubeLink: "https://www.youtube.com/watch?v=awbw9H0Xx20"
-        }
-
         cy.createRecommendation(recommendation);
 
         cy.visit(URL);
@@ -60,11 +45,6 @@ describe("vote", () => {
     });
 
     it("should remove recommendation if score below -5", () => {
-        const recommendation = {
-            name: "Music",
-            youtubeLink: "https://www.youtube.com/watch?v=awbw9H0Xx20"
-        }
-
         cy.createRecommendation(recommendation);
 
         cy.visit(URL);
@@ -81,41 +61,28 @@ describe("vote", () => {
 });
 
 describe("get recommendations", () => {
-    it("should get successfully all last 10 recommendations", () => {
-        const recommendation = {
-            name: "Music",
-            youtubeLink: "https://www.youtube.com/watch?v=awbw9H0Xx20"
-        }
-
+    it("Navigate to home, should get successfully all last 10 recommendations", () => {
         cy.createRecommendation(recommendation);
 
         cy.visit(URL)
         cy.get('#home').click();
 
         cy.contains(`${recommendation.name}`).should("exist");
+        cy.url().should('equal', `${URL}/`);
     });
 
-    // it("should get successfully random recommendations", () => {
-    //     const recommendation = {
-    //         name: "Music",
-    //         youtubeLink: "https://www.youtube.com/watch?v=awbw9H0Xx20"
-    //     }
+    it("Navigate to random, should get successfully random recommendations", () => {
+        cy.createRecommendation(recommendation);
 
-    //     cy.createRecommendation(recommendation);
+        cy.visit(URL)
+        cy.get('#upvote').click();
+        cy.get('#random').click();
 
-    //     cy.visit(URL)
-    //     cy.get('#upvote').click();
-    //     cy.get('#top').click();
+        cy.contains(`${recommendation.name}`).should("exist");
+        cy.url().should('equal', `${URL}/random`);
+    });
 
-    //     cy.contains(`${recommendation.name}`).should("exist");
-    // });
-
-    it("should get successfully recommendations order by best score ", () => {
-        const recommendation = {
-            name: "Music",
-            youtubeLink: "https://www.youtube.com/watch?v=awbw9H0Xx20"
-        }
-
+    it("Navigate to top, should get successfully recommendations order by best score", () => {
         cy.createRecommendation(recommendation);
 
         cy.visit(URL)
@@ -123,5 +90,6 @@ describe("get recommendations", () => {
         cy.get('#top').click();
 
         cy.contains(`${recommendation.name}`).should("exist");
+        cy.url().should('equal', `${URL}/top`);
     });
 });

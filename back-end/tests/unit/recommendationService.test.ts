@@ -1,4 +1,5 @@
 import { jest } from "@jest/globals";
+import { faker } from "@faker-js/faker";
 
 import { recommendationService } from "../../src/services/recommendationsService.js";
 import { recommendationRepository } from "../../src/repositories/recommendationRepository.js";
@@ -11,7 +12,7 @@ jest.mock("../../src/repositories/recommendationRepository");
 describe("insert recommendation test suite", () => {
   it("should create a recommendation", async () => {
     const recommendation: CreateRecommendationData = {
-      name: "Music1",
+      name: faker.music.songName(),
       youtubeLink: "https://www.youtube.com/watch?v=bd5DCefoRbY",
     };
 
@@ -28,7 +29,7 @@ describe("insert recommendation test suite", () => {
 
   it("should not create duplicated recommendations", async () => {
     const recommendation: CreateRecommendationData = {
-      name: "Music1",
+      name: faker.music.songName(),
       youtubeLink: "https://www.youtube.com/watch?v=bd5DCefoRbY",
     };
 
@@ -53,7 +54,7 @@ describe("upvote test suite", () => {
   it("should upvote recommendation", async () => {
     const recommendation: Recommendation = {
       id: 1,
-      name: "Music1",
+      name: faker.music.songName(),
       youtubeLink: "https://www.youtube.com/watch?v=bd5DCefoRbY",
       score: 3,
     };
@@ -91,7 +92,7 @@ describe("downvote test suite", () => {
   it("should downvote recommendation and delete recommendation if score is less than -5", async () => {
     const recommendation: Recommendation = {
       id: 1,
-      name: "Music1",
+      name: faker.music.songName(),
       youtubeLink: "https://www.youtube.com/watch?v=bd5DCefoRbY",
       score: -5,
     };
@@ -143,13 +144,13 @@ describe("get recommendations test suite", () => {
     const recommendations = [
       {
         id: 1,
-        name: "Music1",
+        name: faker.music.songName(),
         youtubeLink: "https://www.youtube.com/watch?v=bd5DCefoRbY",
         score: 20,
       },
       {
         id: 2,
-        name: "Music2",
+        name: faker.music.songName(),
         youtubeLink: "https://www.youtube.com/watch?v=JVSJ_mGWIDc",
         score: 10,
       },
@@ -169,13 +170,13 @@ describe("get recommendations test suite", () => {
     const recommendations = [
       {
         id: 1,
-        name: "Music1",
+        name: faker.music.songName(),
         youtubeLink: "https://www.youtube.com/watch?v=bd5DCefoRbY",
         score: 11,
       },
       {
         id: 2,
-        name: "Music2",
+        name: faker.music.songName(),
         youtubeLink: "https://www.youtube.com/watch?v=JVSJ_mGWIDc",
         score: 9,
       },
@@ -194,13 +195,13 @@ describe("get recommendations test suite", () => {
     const recommendations = [
       {
         id: 1,
-        name: "Music1",
+        name: faker.music.songName(),
         youtubeLink: "https://www.youtube.com/watch?v=bd5DCefoRbY",
         score: 11,
       },
       {
         id: 2,
-        name: "Music2",
+        name: faker.music.songName(),
         youtubeLink: "https://www.youtube.com/watch?v=JVSJ_mGWIDc",
         score: 12,
       },
@@ -219,13 +220,13 @@ describe("get recommendations test suite", () => {
     const recommendations = [
       {
         id: 1,
-        name: "Music1",
+        name: faker.music.songName(),
         youtubeLink: "https://www.youtube.com/watch?v=bd5DCefoRbY",
         score: 3,
       },
       {
         id: 2,
-        name: "Music2",
+        name: faker.music.songName(),
         youtubeLink: "https://www.youtube.com/watch?v=JVSJ_mGWIDc",
         score: -3,
       },
@@ -241,12 +242,23 @@ describe("get recommendations test suite", () => {
   });
 
   it("if don't have recommendations registered, should fail to get", async () => {
-    jest.spyOn(Math, "random").mockReturnValueOnce(0.5);
+    jest.spyOn(Math, "random").mockReturnValueOnce(0.7);
     jest.spyOn(recommendationRepository, "findAll").mockResolvedValue([]);
 
     return expect(recommendationService.getRandom()).rejects.toEqual({
       type: "not_found",
       message: "",
+    });
+  });
+
+  describe("delete all recommendations test suite", () => {
+    it("should delete all recommendations", async () => {
+      jest
+        .spyOn(recommendationRepository, "deleteAll")
+        .mockImplementationOnce((): any => {});
+
+      await recommendationService.deleteAll();
+      expect(recommendationRepository.deleteAll).toBeCalled();
     });
   });
 });
