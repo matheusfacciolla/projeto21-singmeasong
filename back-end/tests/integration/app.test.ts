@@ -1,11 +1,11 @@
 import app from "../../src/app.js";
 import supertest from "supertest";
 import { prisma } from "../../src/database.js";
-import * as recommendationFactory from "./factories/recommendationFactory.js"
+import * as recommendationFactory from "./factories/recommendationFactory.js";
 import * as scenarioFactory from "./factories/scenarioFactory.js";
 
 beforeEach(async () => {
-    await prisma.$executeRaw`TRUNCATE TABLE recommendations`;
+  await prisma.$executeRaw`TRUNCATE TABLE recommendations RESTART IDENTITY`;
 });
 
 describe("post new recommendation tests", () => {
@@ -38,14 +38,16 @@ describe("upvote recommendations post", () => {
   it("given valid id, add one upvote", async () => {
     const data = await scenarioFactory.scenarioRecommendationWithScoreTwo();
 
-    const response = await supertest(app).post(`/recommendations/${data.id}/upvote`);
+    const response = await supertest(app).post(
+      `/recommendations/${data.id}/upvote`
+    );
     expect(response.statusCode).toBe(200);
 
     const dataAfterUpVote = await prisma.recommendation.findFirst({
       where: {
-        name: data.name
-      }
-    })
+        name: data.name,
+      },
+    });
     expect(dataAfterUpVote.score).toEqual(3);
   });
 
@@ -61,27 +63,32 @@ describe("downvote recommendations post", () => {
   it("given valid id, add one downvote", async () => {
     const data = await scenarioFactory.scenarioRecommendationWithScoreTwo();
 
-    const response = await supertest(app).post(`/recommendations/${data.id}/downvote`);
+    const response = await supertest(app).post(
+      `/recommendations/${data.id}/downvote`
+    );
     expect(response.statusCode).toBe(200);
 
     const dataAfterDownVote = await prisma.recommendation.findFirst({
       where: {
-        name: data.name
-      }
-    })
+        name: data.name,
+      },
+    });
     expect(dataAfterDownVote.score).toEqual(1);
   });
 
   it("given downvote scores get -6, expect to delete recommendation", async () => {
-    const data = await scenarioFactory.scenarioRecommendationWithScoreMinusSix();
-    const response = await supertest(app).post(`/recommendations/${data.id}/downvote`);
+    const data =
+      await scenarioFactory.scenarioRecommendationWithScoreMinusSix();
+    const response = await supertest(app).post(
+      `/recommendations/${data.id}/downvote`
+    );
     expect(response.statusCode).toBe(200);
 
     const dataAfterMinusFive = await prisma.recommendation.findFirst({
       where: {
-        name: data.name
-      }
-    })
+        name: data.name,
+      },
+    });
 
     expect(dataAfterMinusFive).toBeNull();
   });
@@ -96,11 +103,11 @@ describe("downvote recommendations post", () => {
 
 describe("recommendations get tests", () => {
   it("for get recommendations, return status code 200", async () => {
-    const data = await scenarioFactory.scenarioWith15Recommendation();
+    const data = await scenarioFactory.scenarioWith11Recommendation();
     const response = await supertest(app).get(`/recommendations`);
 
     expect(response.body.length).toEqual(10);
-    expect(data[5]).toEqual(response.body[9]);
+    expect(data[10]).toEqual(response.body[0]);
     expect(response.statusCode).toBe(200);
   });
 });
@@ -123,7 +130,7 @@ describe("recommendations get by id tests", () => {
 
 describe("random recommendations get tests", () => {
   it("for get random recommendations, return status code 200", async () => {
-    await scenarioFactory.scenarioWith15Recommendation();
+    await scenarioFactory.scenarioWith11Recommendation();
 
     const response = await supertest(app).get(`/recommendations/random`);
     expect(response.statusCode).toBe(200);
@@ -139,11 +146,9 @@ describe("top recommendations get by amount score tests", () => {
   it("for get top recommendations by amount score, return status code 200", async () => {
     const data = await scenarioFactory.scenarioRecommendationWithScoreTwo();
     await scenarioFactory.scenarioRecommendationWithScoreMinusSix();
-    await scenarioFactory.scenarioWith15Recommendation();
+    await scenarioFactory.scenarioWith11Recommendation();
 
     const response = await supertest(app).get(`/recommendations/top/5`);
-    expect(response.statusCode).toBe(200);
-    expect(response.body.length).toEqual(5);
     expect(response.body[0]).toEqual(data);
   });
 

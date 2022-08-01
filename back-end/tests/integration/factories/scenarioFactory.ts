@@ -31,14 +31,14 @@ export async function scenarioRecommendationWithScoreMinusSix() {
   return recommendation;
 }
 
-export async function scenarioWith15Recommendation() {
+export async function scenarioWith11Recommendation() {
   const recommendation = [];
   const data = await recommendationFactory.createRecommendationData();
 
-  for(let i=1; i<16; i++){
+  for (let i = 1; i < 12; i++) {
     const createData = await prisma.recommendation.create({
-      data: {...data, name: faker.music.songName()}
-    })
+      data: { name: faker.music.songName(), youtubeLink: data.youtubeLink },
+    });
     recommendation.push(createData);
   }
 

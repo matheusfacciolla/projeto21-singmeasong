@@ -67,6 +67,10 @@ describe("get recommendations", () => {
         cy.visit(URL)
         cy.get('#home').click();
 
+        cy.intercept('GET', '/recommendations').as('getRecommendationHome');
+        cy.visit(`${URL}/`);
+        cy.wait('@getRecommendationHome');
+
         cy.contains(`${recommendation.name}`).should("exist");
         cy.url().should('equal', `${URL}/`);
     });
@@ -76,7 +80,10 @@ describe("get recommendations", () => {
 
         cy.visit(URL)
         cy.get('#upvote').click();
+
+        cy.intercept('GET', '/recommendations/random').as('randomRecommendation');
         cy.get('#random').click();
+        cy.wait('@randomRecommendation');
 
         cy.contains(`${recommendation.name}`).should("exist");
         cy.url().should('equal', `${URL}/random`);
@@ -87,7 +94,10 @@ describe("get recommendations", () => {
 
         cy.visit(URL)
         cy.get('#upvote').click();
+
+        cy.intercept('GET', '/recommendations/top/10').as('topRecommendation');
         cy.get('#top').click();
+        cy.wait('@topRecommendation');
 
         cy.contains(`${recommendation.name}`).should("exist");
         cy.url().should('equal', `${URL}/top`);
